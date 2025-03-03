@@ -13,11 +13,16 @@ if [ x"$missing_deps" != x"" ]; then
 	exit 1
 fi
 
+CHANNEL="live" # live or test or legacy
 WEBSITE_URL="http://download.skylords.eu/"
 
 # returns list of all files, one per line with "update/" prefix, followed by ; and md5 sum
 echo "Fetching update list..."
-update_txt="$(curl "$WEBSITE_URL/update.txt" | tr \\\\ /)"
+update_json="$(curl "$WEBSITE_URL/manifest-${CHANNEL}.json" | tr \\\\ /)"
+update_txt="$(echo "$update_json" | \
+    python3 -c \
+        'import json,sys;print("\n".join(map(lambda x: ";".join(x), json.load(sys.stdin)["filesChecksum"].items())))' \
+)"
 
 # now download them one by one from website if md5 does not match
 i=0
